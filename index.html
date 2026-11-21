@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test łaciny – anatomia czaszki</title>
+  <style>
+    :root {
+      --bg: #eef2f6;
+      --card: #ffffff;
+      --primary: #2563eb;
+      --primary-light: #dbeafe;
+      --border: #cbd5e1;
+      --text: #0f172a;
+      --muted: #475569;
+      --ok-bg: #dcfce7;
+      --ok-border: #16a34a;
+      --err-bg: #fee2e2;
+      --err-border: #dc2626;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 1.5rem 1rem;
+      line-height: 1.45;
+    }
+
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+      background: var(--card);
+      border-radius: 14px;
+      padding: 1.5rem;
+      box-shadow: 0 6px 22px rgba(15, 23, 42, 0.07);
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      padding-bottom: 0.9rem;
+      margin-bottom: 1.25rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    h1 {
+      font-size: 1.15rem;
+      margin: 0;
+    }
+
+    .meta {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: 999px;
+    }
+
+    .pill-score {
+      background: #e2e8f0;
+      color: var(--text);
+    }
+
+    .question-text {
+      font-size: 1.12rem;
+      font-weight: 700;
+      margin: 0 0 1rem;
+    }
+
+    .question-text .pl-highlight {
+      color: var(--primary);
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .option-btn {
+      width: 100%;
+      text-align: left;
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 0.8rem 1rem;
+      font-size: 0.98rem;
+      font-style: italic;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.14s ease;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--primary);
+      background: #f8fafc;
+    }
+
+    .option-btn:disabled {
+      cursor: default;
+    }
+
+    .option-btn.correct {
+      background: var(--ok-bg);
+      border-color: var(--ok-border);
+      color: #14532d;
+      font-weight: 700;
+    }
+
+    .option-btn.wrong {
+      background: var(--err-bg);
+      border-color: var(--err-border);
+      color: #7f1d1d;
+    }
+
+    .feedback-box {
+      display: none;
+      margin-top: 1.1rem;
+      padding: 0.95rem 1.05rem;
+      border-radius: 10px;
+      border-left: 4px solid var(--primary);
+      background: #f8fafc;
+      font-size: 0.93rem;
+    }
+
+    .feedback-box.show {
+      display: block;
+    }
+
+    .feedback-box.is-ok {
+      background: #f0fdf4;
+      border-left-color: var(--ok-border);
+    }
+
+    .feedback-box.is-err {
+      background: #fef2f2;
+      border-left-color: var(--err-border);
+    }
+
+    .feedback-status {
+      font-weight: 800;
+      margin: 0 0 0.35rem;
+      font-size: 0.98rem;
+    }
+
+    .feedback-status.ok { color: #15803d; }
+    .feedback-status.err { color: #b91c1c; }
+
+    .feedback-desc {
+      margin: 0;
+      color: var(--text);
+    }
+
+    .footer-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1.35rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .action-btn {
+      padding: 0.65rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-next {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .btn-next:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .btn-restart {
+      background: #e2e8f0;
+      color: var(--text);
+    }
+
+    .summary-box {
+      text-align: center;
+      padding: 1.2rem 0.5rem;
+    }
+
+    .summary-score {
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin: 0.5rem 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container" id="quiz-app"></div>
+
+  <script>
+    const entries = [
+      { key: "sutura_coronalis",                pl: "szew wieńcowy",                        la: "sutura coronalis",                     confuse: ["sutura_lambdoidea", "sutura_sagittalis", "sutura_frontozygomatica"], desc: "Łączy kość czołową z kośćmi ciemieniowymi («wieniec» z przodu sklepienia)." },
+      { key: "sutura_lambdoidea",               pl: "szew węgłowy",                         la: "sutura lambdoidea",                    confuse: ["sutura_coronalis", "sutura_sagittalis", "sutura_frontozygomatica"], desc: "Przebiega z tyłu między kośćmi ciemieniowymi a łuską potyliczną — przypomina grecką lambdę (Λ)." },
+      { key: "sutura_sagittalis",               pl: "szew strzałkowy",                      la: "sutura sagittalis",                    confuse: ["sutura_coronalis", "sutura_lambdoidea", "lamina_perpendicularis_ossis_ethmoidalis"], desc: "Biegnie w płaszczyźnie strzałkowej pośrodku sklepienia między kośćmi ciemieniowymi." },
+      { key: "pars_petrosa",                    pl: "część skalista",                       la: "pars petrosa",                        confuse: ["eminentia_arcuata", "processus_mastoideus", "squama_occipitalis"], desc: "Gęsta część kości skroniowej (piramida) — wyraźnie wysycona w rzucie tylno-przednim." },
+      { key: "sulci_arteriosi",                 pl: "bruzdy tętnicze",                      la: "sulci arteriosi",                     confuse: ["venae_diploicae", "foveolae_granulares", "impressiones_digitatae"], desc: "Cienkie, rozgałęzione rowki zostawiane przez tętnice na wewnętrznej stronie sklepienia." },
+      { key: "venae_diploicae",                 pl: "żyły śródkościa",                      la: "venae diploicae",                     confuse: ["sulci_arteriosi", "diploe", "foveolae_granulares"], desc: "Kanały żylne biegnące w śródkościu (diploë), czyli w warstwie gąbczastej kości czaszki." },
+      { key: "foveolae_granulares",              pl: "dołeczki ziarenkowe",                   la: "foveolae granulares",                 confuse: ["sulci_arteriosi", "venae_diploicae", "impressiones_digitatae"], desc: "Drobne zagłębienia po ziarnistościach pajęczynówki w pobliżu linii pośrodkowej." },
+      { key: "impressiones_digitatae",            pl: "wyciski palczaste",                    la: "impressiones digitatae",              confuse: ["foveolae_granulares", "sulci_arteriosi", "venae_diploicae"], desc: "Delikatne odciski zakrętów mózgu na wewnętrznej powierzchni kości czaszki." },
+      { key: "diploe",                          pl: "śródkoście",                           la: "diploë",                              confuse: ["venae_diploicae", "squama_occipitalis", "pars_orbitalis_ossis_frontalis"], desc: "Warstwa istoty gąbczastej zawarta między zewnętrzną a wewnętrzną blaszką kości sklepienia." },
+      { key: "sinus_frontalis",                 pl: "zatoka czołowa",                       la: "sinus frontalis",                     confuse: ["sinus_sphenoidalis", "sinus_maxillaris", "labyrinthus_ethmoidalis"], desc: "Powietrzna zatoka w kości czołowej — widoczna nad oczodołami." },
+      { key: "pars_orbitalis_ossis_frontalis",  pl: "część oczodołowa kości czołowej",      la: "pars orbitalis ossis frontalis",      confuse: ["ala_minor", "ala_major", "processus_zygomaticus_ossis_frontalis"], desc: "Tworzy górną ścianę (strop) oczodołu — w nazwie od razu pojawia się «orbitalis»." },
+      { key: "ala_minor",                       pl: "skrzydło mniejsze",                    la: "ala minor",                           confuse: ["ala_major", "planum_sphenoidale", "pars_orbitalis_ossis_frontalis"], desc: "Mniejsze z parzystych skrzydeł kości klinowej («ala minor» = mniejsze skrzydło)." },
+      { key: "planum_sphenoidale",              pl: "płaszczyzna klinowa",                  la: "planum sphenoidale",                  confuse: ["ala_minor", "sinus_sphenoidalis", "ala_major"], desc: "Gładka powierzchnia górna trzonu kości klinowej położona przed rowkiem skrzyżowania." },
+      { key: "fissura_orbitalis_superior",      pl: "szczelina oczodołowa górna",           la: "fissura orbitalis superior",          confuse: ["foramen_rotundum", "orbita", "apertura_piriformis"], desc: "Szczelina («fissura») między skrzydłem większym a mniejszym kości klinowej w szczycie oczodołu." },
+      { key: "crista_galli",                    pl: "grzebień koguci",                      la: "crista galli",                        confuse: ["lamina_perpendicularis_ossis_ethmoidalis", "labyrinthus_ethmoidalis", "vomer"], desc: "Pionowy wyrostek kości sitowej w przednim dole czaszki — «crista» to grzebień." },
+      { key: "processus_mastoideus",            pl: "wyrostek sutkowaty",                   la: "processus mastoideus",                confuse: ["eminentia_arcuata", "pars_petrosa", "processus_transversus_atlantis"], desc: "Stożkowaty wyrostek kości skroniowej za uchem («mastoideus» = sutkowaty)." },
+      { key: "eminentia_arcuata",               pl: "wyniosłość łukowata",                  la: "eminentia arcuata",                   confuse: ["pars_petrosa", "processus_mastoideus", "linea_innominata"], desc: "Zaokrąglone uwypuklenie na przedniej powierzchni części skalistej kości skroniowej." },
+      { key: "sinus_sphenoidalis",              pl: "zatoka klinowa",                       la: "sinus sphenoidalis",                  confuse: ["sinus_frontalis", "sinus_maxillaris", "planum_sphenoidale"], desc: "Zatoka przynosowa leżąca w trzonie kości klinowej («sphenoidalis» = klinowy)." },
+      { key: "ala_major",                       pl: "skrzydło większe",                     la: "ala major",                           confuse: ["ala_minor", "pars_orbitalis_ossis_frontalis", "processus_frontalis_ossis_zygomatici"], desc: "Szersze z parzystych skrzydeł kości klinowej («ala major» = większe skrzydło)." },
+      { key: "foramen_rotundum",                pl: "otwór okrągły",                        la: "foramen rotundum",                    confuse: ["fissura_orbitalis_superior", "apertura_piriformis", "orbita"], desc: "Otwór («foramen») w skrzydle większym kości klinowej — okrągły w przekroju." },
+      { key: "squama_occipitalis",              pl: "łuska potyliczna",                     la: "squama occipitalis",                  confuse: ["pars_petrosa", "diploe", "sutura_lambdoidea"], desc: "Szeroka, płaska część kości potylicznej ku tyłowi od otworu wielkiego («squama» = łuska)." },
+      { key: "cavum_nasi",                      pl: "jama nosowa",                          la: "cavum nasi",                          confuse: ["orbita", "apertura_piriformis", "sinus_maxillaris"], desc: "Jama nosowa przedzielona przegrodą nosa, otwierająca się otworem gruszkowatym." },
+      { key: "orbita",                          pl: "oczodół",                              la: "orbita",                              confuse: ["cavum_nasi", "pars_orbitalis_ossis_frontalis", "fissura_orbitalis_superior"], desc: "Jama oczodołowa mieszcząca gałkę oczną i struktury towarzyszące." },
+      { key: "lamina_perpendicularis_ossis_ethmoidalis", pl: "blaszka pionowa kości sitowej", la: "lamina perpendicularis ossis ethmoidalis", confuse: ["labyrinthus_ethmoidalis", "vomer", "crista_galli"], desc: "Pionowa blaszka kości sitowej budująca górną część przegrody nosa." },
+      { key: "labyrinthus_ethmoidalis",         pl: "błędnik sitowy",                       la: "labyrinthus ethmoidalis",             confuse: ["lamina_perpendicularis_ossis_ethmoidalis", "concha_nasalis_media", "sinus_frontalis"], desc: "Boczna część kości sitowej zawierająca komórki sitowe («labyrinthus» = błędnik)." },
+      { key: "vomer",                           pl: "lemiesz",                              la: "vomer",                               confuse: ["lamina_perpendicularis_ossis_ethmoidalis", "concha_nasalis_inferior", "concha_nasalis_media"], desc: "Nieparzysta kość tworząca tylno-dolną część przegrody nosa — krótka, jednowyrazowa nazwa łacińska." },
+      { key: "concha_nasalis_media",            pl: "małżowina nosowa środkowa",            la: "concha nasalis media",                confuse: ["concha_nasalis_inferior", "labyrinthus_ethmoidalis", "vomer"], desc: "Środkowa («media») z małżowin na bocznej ścianie jamy nosowej; część kości sitowej." },
+      { key: "concha_nasalis_inferior",         pl: "małżowina nosowa dolna",               la: "concha nasalis inferior",             confuse: ["concha_nasalis_media", "vomer", "apertura_piriformis"], desc: "Dolna («inferior») małżowina nosowa — w przeciwieństwie do górnej i środkowej jest osobną kością." },
+      { key: "apertura_piriformis",             pl: "otwór gruszkowaty",                    la: "apertura piriformis",                 confuse: ["cavum_nasi", "foramen_rotundum", "fissura_orbitalis_superior"], desc: "Przedni otwór kostnej jamy nosowej na twarzoczaszce («piriformis» = gruszkowaty)." },
+      { key: "sinus_maxillaris",                pl: "zatoka szczękowa",                     la: "sinus maxillaris",                    confuse: ["sinus_frontalis", "sinus_sphenoidalis", "labyrinthus_ethmoidalis"], desc: "Największa zatoka przynosowa, położona w trzonie szczęki («maxillaris» = szczękowy)." },
+      { key: "linea_innominata",                pl: "kresa bezimienna",                     la: "linea innominata",                    confuse: ["crista_zygomaticoalveolaris", "eminentia_arcuata", "sutura_sagittalis"], desc: "Linia («linea») oznaczona na tym zestawie nazw jako kresa bezimienna." },
+      { key: "processus_frontalis_ossis_zygomatici", pl: "wyrostek czołowy kości jarzmowej", la: "processus frontalis ossis zygomatici", confuse: ["processus_zygomaticus_ossis_frontalis", "sutura_frontozygomatica", "crista_zygomaticoalveolaris"], desc: "Wyrostek wychodzący z kości jarzmowej ku górze w stronę kości czołowej." },
+      { key: "sutura_frontozygomatica",         pl: "szew czołowo-jarzmowy",                la: "sutura frontozygomatica",             confuse: ["processus_frontalis_ossis_zygomatici", "processus_zygomaticus_ossis_frontalis", "sutura_coronalis"], desc: "Szew («sutura») łączący kość czołową z kością jarzmową na bocznym brzegu oczodołu." },
+      { key: "processus_zygomaticus_ossis_frontalis", pl: "wyrostek jarzmowy kości czołowej", la: "processus zygomaticus ossis frontalis", confuse: ["processus_frontalis_ossis_zygomatici", "sutura_frontozygomatica", "pars_orbitalis_ossis_frontalis"], desc: "Wyrostek kości czołowej skierowany ku kości jarzmowej — łatwo zamienić kierunek z wyrostkiem czołowym kości jarzmowej." },
+      { key: "processus_alveolaris_maxillae",   pl: "wyrostek zębodołowy szczęki",          la: "processus alveolaris maxillae",       confuse: ["processus_alveolaris_mandibulae", "crista_zygomaticoalveolaris", "corpus_mandibulae"], desc: "Część szczęki («maxillae») z zębodołami dla górnych zębów." },
+      { key: "crista_zygomaticoalveolaris",     pl: "grzebień jarzmowo-zębodołowy",         la: "crista zygomaticoalveolaris",         confuse: ["processus_alveolaris_maxillae", "processus_frontalis_ossis_zygomatici", "linea_innominata"], desc: "Grzebień kostny («crista») biegnący między okolicą jarzmową a wyrostkiem zębodołowym szczęki." },
+      { key: "corpus_mandibulae",               pl: "trzon żuchwy",                         la: "corpus mandibulae",                   confuse: ["ramus_mandibulae", "angulus_mandibulae", "processus_alveolaris_mandibulae"], desc: "Podkowiasta część żuchwy («corpus mandibulae») niosąca część zębodołową." },
+      { key: "angulus_mandibulae",              pl: "kąt żuchwy",                          la: "angulus mandibulae",                  confuse: ["corpus_mandibulae", "ramus_mandibulae", "processus_alveolaris_mandibulae"], desc: "Miejsce przejścia trzonu żuchwy w jej gałąź («angulus» = kąt)." },
+      { key: "ramus_mandibulae",                pl: "gałąź żuchwy",                         la: "ramus mandibulae",                    confuse: ["corpus_mandibulae", "angulus_mandibulae", "processus_alveolaris_mandibulae"], desc: "Wznosząca się część żuchwy («ramus mandibulae») biegnąca ku górze od kąta żuchwy." },
+      { key: "processus_alveolaris_mandibulae", pl: "wyrostek zębodołowy żuchwy",        la: "processus alveolaris mandibulae",     confuse: ["processus_alveolaris_maxillae", "corpus_mandibulae", "ramus_mandibulae"], desc: "Część żuchwy («mandibulae») z zębodołami dla dolnych zębów — uważaj na różnicę z «maxillae»." },
+      { key: "massa_lateralis_atlantis",        pl: "część boczna kręgu szczytowego",       la: "massa lateralis atlantis",            confuse: ["processus_transversus_atlantis", "corpus_axis", "dens_axis"], desc: "Masywna część boczna atlasu (C1) łącząca łuk przedni i tylny." },
+      { key: "processus_transversus_atlantis",  pl: "wyrostek poprzeczny kręgu szczytowego", la: "processus transversus atlantis",     confuse: ["massa_lateralis_atlantis", "corpus_axis", "articulatio_atlantoaxialis_lateralis"], desc: "Wyrostek poprzeczny pierwszego kręgu szyjnego — atlasu (C1)." },
+      { key: "corpus_axis",                   pl: "trzon kręgu obrotowego",               la: "corpus axis",                         confuse: ["dens_axis", "massa_lateralis_atlantis", "corpus_mandibulae"], desc: "Trzon drugiego kręgu szyjnego — obrotnika (C2), poniżej zęba obrotnika." },
+      { key: "dens_axis",                     pl: "ząb kręgu obrotowego",                 la: "dens axis",                           confuse: ["corpus_axis", "articulatio_atlantoaxialis_lateralis", "massa_lateralis_atlantis"], desc: "Charakterystyczny wyrostek («dens» = ząb) wznoszący się ku górze z trzonu obrotnika (C2)." },
+      { key: "articulatio_atlantoaxialis_lateralis", pl: "staw szczytowo-obrotowy boczny", la: "articulatio atlantoaxialis lateralis", confuse: ["massa_lateralis_atlantis", "processus_transversus_atlantis", "dens_axis"], desc: "Staw («articulatio») między kręgiem szczytowym (atlas) a obrotowym (axis) po stronie bocznej." }
+    ];
+
+    let order = [];
+    let currentPos = 0;
+    let score = 0;
+    let answered = false;
+
+    const appEl = document.getElementById("quiz-app");
+
+    function randomInt(maxExclusive) {
+      if (window.crypto && window.crypto.getRandomValues) {
+        const arr = new Uint32Array(1);
+        window.crypto.getRandomValues(arr);
+        return arr[0] % maxExclusive;
+      }
+      return Math.floor(Math.random() * maxExclusive);
+    }
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = randomInt(i + 1);
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function buildQuestion(targetEntry) {
+      const distractors = [];
+      const usedKeys = new Set([targetEntry.key]);
+
+      for (const cKey of shuffle(targetEntry.confuse || [])) {
+        if (distractors.length >= 3) break;
+        const found = entries.find((e) => e.key === cKey);
+        if (found && !usedKeys.has(found.key)) {
+          distractors.push(found.la);
+          usedKeys.add(found.key);
+        }
+      }
+
+      for (const candidate of shuffle(entries)) {
+        if (distractors.length >= 3) break;
+        if (!usedKeys.has(candidate.key)) {
+          distractors.push(candidate.la);
+          usedKeys.add(candidate.key);
+        }
+      }
+
+      const rawOptions = [
+        { text: targetEntry.la, isCorrect: true },
+        ...distractors.map((laText) => ({ text: laText, isCorrect: false }))
+      ];
+
+      return {
+        entry: targetEntry,
+        options: shuffle(rawOptions)
+      };
+    }
+
+    function startQuiz() {
+      const indices = entries.map((_, i) => i);
+      let nextOrder = shuffle(indices);
+      if (order.length > 1 && nextOrder[0] === order[0]) {
+        nextOrder = shuffle(indices);
+      }
+      order = nextOrder;
+      currentPos = 0;
+      score = 0;
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      answered = false;
+
+      if (currentPos >= order.length) {
+        const pct = Math.round((score / order.length) * 100);
+        appEl.innerHTML = `
+          <div class="summary-box">
+            <h2>Twój wynik</h2>
+            <div class="summary-score">${score} / ${order.length} (${pct}%)</div>
+            <p class="question-text" style="font-weight:500;">
+              ${pct >= 85 ? "Świetnie — nazwy łacińskie są bardzo pewne." : pct >= 60 ? "Dobrze — jeszcze jedna losowa runda i mylące pary będą całkiem jasne." : "Dobra rozgrzewka — wylosuj kolejną rundę i czytaj opisy po kliknięciu."}
+            </p>
+            <button class="action-btn btn-next" id="again-btn" type="button">Losuj nowy test</button>
+          </div>
+        `;
+        document.getElementById("again-btn").addEventListener("click", startQuiz);
+        return;
+      }
+
+      const target = entries[order[currentPos]];
+      const q = buildQuestion(target);
+
+      appEl.innerHTML = `
+        <div class="top-bar">
+          <h1>Test łaciny – anatomia czaszki</h1>
+          <div class="meta">
+            <span class="pill">Pytanie ${currentPos + 1} / ${order.length}</span>
+            <span class="pill pill-score">Punkty: ${score}</span>
+          </div>
+        </div>
+
+        <p class="question-text">Jaka jest łacińska nazwa dla: <span class="pl-highlight">„${target.pl}”</span>?</p>
+
+        <div class="options" id="options-list"></div>
+
+        <div class="feedback-box" id="feedback-box">
+          <p class="feedback-status" id="feedback-status"></p>
+          <p class="feedback-desc" id="feedback-desc"></p>
+        </div>
+
+        <div class="footer-actions">
+          <button class="action-btn btn-restart" id="restart-btn" type="button">Przetasuj od nowa</button>
+          <button class="action-btn btn-next" id="next-btn" type="button" disabled>
+            ${currentPos === order.length - 1 ? "Zobacz podsumowanie" : "Następne pytanie →"}
+          </button>
+        </div>
+      `;
+
+      const optList = document.getElementById("options-list");
+      q.options.forEach((opt) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "option-btn";
+        btn.textContent = opt.text;
+        btn.addEventListener("click", () => handleSelect(btn, opt.isCorrect, target));
+        optList.appendChild(btn);
+      });
+
+      document.getElementById("next-btn").addEventListener("click", () => {
+        currentPos++;
+        renderQuestion();
+      });
+
+      document.getElementById("restart-btn").addEventListener("click", startQuiz);
+    }
+
+    function handleSelect(clickedBtn, isCorrect, target) {
+      if (answered) return;
+      answered = true;
+
+      const allBtns = document.querySelectorAll(".option-btn");
+      allBtns.forEach((b) => {
+        b.disabled = true;
+        if (b.textContent === target.la) {
+          b.classList.add("correct");
+        }
+      });
+
+      const fbBox = document.getElementById("feedback-box");
+      const fbStatus = document.getElementById("feedback-status");
+      const fbDesc = document.getElementById("feedback-desc");
+
+      fbBox.classList.add("show");
+
+      if (isCorrect) {
+        score++;
+        document.querySelector(".pill-score").textContent = `Punkty: ${score}`;
+        fbBox.classList.add("is-ok");
+        fbStatus.className = "feedback-status ok";
+        fbStatus.textContent = `Prawidłowo! ${target.pl} — ${target.la}`;
+      } else {
+        clickedBtn.classList.add("wrong");
+        fbBox.classList.add("is-err");
+        fbStatus.className = "feedback-status err";
+        fbStatus.textContent = `Nie tym razem. Poprawna odpowiedź to: ${target.la}`;
+      }
+
+      fbDesc.textContent = target.desc;
+      document.getElementById("next-btn").disabled = false;
+    }
+
+    startQuiz();
+  </script>
+</body>
+</html>
